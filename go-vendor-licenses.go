@@ -16,7 +16,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	license "tq-git-pr1.tq-net.de/tq-em/base/go-vendor-licenses.git/license"
+	license "tq-git-pr1.tq-net.de/tq-em/base/SW.go-vendor-licenses.git/license"
 )
 
 const version string = "0.1"

@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"text/tabwriter"
 
@@ -41,6 +42,7 @@ func readGopkgFile() {
 	file, error := os.Open(gopkgFile)
 	if error != nil {
 		fmt.Println(error)
+		os.Exit(1)
 	}
 	defer file.Close()
 
@@ -133,6 +135,11 @@ func createDisclaimer() error {
 }
 
 func main() {
+	if runtime.GOOS != "linux" {
+		fmt.Println("Error: This tool is running in linux only!")
+		os.Exit(1)
+	}
+
 	manifest = make(map[int]*metadata)
 	readGopkgFile()
 
@@ -156,14 +163,15 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Printf(`Usage: vendor-licenses [mode]
+		fmt.Printf(`Usage: go-vendor-licenses [mode]
 
 modes:
   -m    display dependencies manifest
   -d    display dependencies disclaimer
 
-'vendor-licenses' reads the 'Gopkg.lock' file and analyzes the vendor directory which are created by the go dependency tool 'dep'.
-Ensure running 'dep ensure' before using this tool.
+'go-vendor-licenses' is a go dependencies tool which can be used natively during developing or building.
+The tool reads the 'Gopkg.lock' file and identifies the licenses in the vendor directory.
+These are created by the go dependencies tool 'dep', so ensure running 'dep ensure' before using this tool.
 
 `)
 		os.Exit(1)

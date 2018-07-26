@@ -1,6 +1,6 @@
 ---
-title: BSD 3-clause Clear License
-nickname: Clear BSD
+title: Clear BSD 3-clause License
+nickname: Clear-BSD-3-Clause
 hidden: true
 
 category: BSD

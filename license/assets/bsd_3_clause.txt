@@ -1,6 +1,6 @@
 ---
-title: BSD 3-clause "New" or "Revised" License
-nickname: New BSD
+title: BSD 3-clause License
+nickname: BSD-3-Clause
 tab-slug: bsd-3
 category: BSD
 variant: true

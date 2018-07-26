@@ -1,5 +1,6 @@
 ---
 title: MIT License
+nickname: MIT
 featured: true
 source: http://opensource.org/licenses/MIT
 

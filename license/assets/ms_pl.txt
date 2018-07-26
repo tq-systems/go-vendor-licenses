@@ -1,6 +1,7 @@
 ---
 title: Microsoft Public License
-hidden: true  
+nickname: MS-PL
+hidden: true
 
 source: http://opensource.org/licenses/ms-pl
 

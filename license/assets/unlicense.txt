@@ -1,5 +1,6 @@
 ---
 title: The Unlicense
+nickname: UNLICENSE
 tab-slug: unlicense
 category: Public Domain Dedication
 source: http://unlicense.org/UNLICENSE

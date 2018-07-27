@@ -86,7 +86,6 @@ func readGopkgFile() {
 			}
 		}
 	}
-	return
 }
 
 func createManifest() error {
@@ -112,12 +111,16 @@ func createManifest() error {
 	return nil
 }
 
-func identifyLicenses() {
+func identifyLicenses(ignoreCritLicsFlag bool) {
 	for k := 0; k < len(manifest); k++ {
 		licenseString, err := license.BuildLicenseString(manifest[k].name)
 		if err != nil {
-			fmt.Println(licenseString, err)
-			os.Exit(1)
+			if ignoreCritLicsFlag {
+				manifest[k].license = licenseString
+			} else {
+				fmt.Println(licenseString, err)
+				os.Exit(1)
+			}
 		} else {
 			manifest[k].license = licenseString
 		}
@@ -143,6 +146,8 @@ func main() {
 	manifest = make(map[int]*metadata)
 	readGopkgFile()
 
+	ignoreCritLicsFlag := flag.Bool("i", false,
+		"ignore missing or copyleft licenses")
 	manifestFlag := flag.Bool("m", false,
 		"display manifest of dependant packages")
 	disclaimerFlag := flag.Bool("d", false,
@@ -150,7 +155,7 @@ func main() {
 	flag.Parse()
 
 	if *manifestFlag {
-		identifyLicenses()
+		identifyLicenses(*ignoreCritLicsFlag)
 		err := createManifest()
 		if err != nil {
 			fmt.Println(err)
@@ -163,7 +168,10 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Printf(`Usage: go-vendor-licenses [mode]
+		fmt.Printf(`Usage: go-vendor-licenses [option] [mode]
+
+option:
+	-i		ignore crititcal licenses during creating the manifest
 
 modes:
   -m    display dependencies manifest

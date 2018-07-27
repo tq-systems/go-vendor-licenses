@@ -44,6 +44,20 @@ var (
 		`(?i)\s*Copyright (?:©|\(c\)|\xC2\xA9)?\s*(?:\d{4}|\[year\]).*`)
 )
 
+var (
+	criticalLicenseNicknames = []string{
+		"AGPL-3.0",
+		"EPL-1.0",
+		"GPL-2.0",
+		"GPL-3.0",
+		"MPL-2.0",
+		"MS-RL",
+		"NOLICENSE",
+		"LGPL-2.1",
+		"OSL-3.0",
+	}
+)
+
 type Template struct {
 	Title    string
 	Nickname string
@@ -284,6 +298,13 @@ func BuildLicenseString(pkg string) (string, error) {
 		return "", err
 	}
 
+	for _, match := range criticalLicenseNicknames {
+		if match == license.Template.Nickname {
+			fmt.Println("Found critical license: ", license.Template.Nickname)
+			err = fmt.Errorf("criticalLicense")
+		}
+	}
+
 	licenseString := "?"
 	if license.Template != nil {
 		if license.Score >= confidence {
@@ -302,7 +323,7 @@ func BuildLicenseString(pkg string) (string, error) {
 	} else if license.Err != "" {
 		licenseString = strings.Replace(license.Err, "\n", " ", -1)
 	}
-	return licenseString, nil
+	return licenseString, err
 }
 
 func BuildDisclaimerString(pkg string) error {

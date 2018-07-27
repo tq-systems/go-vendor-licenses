@@ -1,6 +1,6 @@
 ---
 title: Apache License 2.0
-nickname: Apache
+nickname: Apache-2.0
 redirect_from: /licenses/apache/
 featured: true
 source: http://www.apache.org/licenses/LICENSE-2.0.html

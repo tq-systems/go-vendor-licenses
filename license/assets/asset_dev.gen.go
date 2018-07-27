@@ -24,7 +24,7 @@ func (a asset) init() asset {
 
 func (a asset) importPath() string {
 	// filled at code gen time
-	return "tq-git-pr1.tq-net.de/tq-em/base/vendor-licenses/assets"
+	return "tq-git-pr1.tq-net.de/tq-em/base/SW.go-vendor-licenses.git/license/assets"
 }
 
 func (a asset) Open() (*os.File, error) {

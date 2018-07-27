@@ -1,6 +1,6 @@
 ---
 title: GNU General Public License v3.0
-nickname: GNU GPL v3.0
+nickname: GPL-3.0
 tab-slug: gpl-v3
 redirect_from: /licenses/gpl-v3/
 category: GPL

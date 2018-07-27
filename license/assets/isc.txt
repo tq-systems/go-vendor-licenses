@@ -1,5 +1,6 @@
 ---
 title: ISC License
+nickname: ISC
 tab-slug: isc
 category: BSD
 source: http://opensource.org/licenses/isc-license

@@ -1,5 +1,6 @@
 ---
 title: TQ-Systems Software License Agreement Version 1.0.1
+nickname: TQSSLA-1.0.1
 source: https://www.tq-group.com/en/Licensing-conditions-for-Software
 
 description: The proprietary software license of TQ-Systems.

@@ -22,7 +22,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"tq-git-pr1.tq-net.de/tq-em/base/SW.go-vendor-licenses.git/license/assets"
+	"vgitlab01.tq-net.de/tq-em/tools/go-vendor-licenses.git/license/assets"
 )
 
 var (

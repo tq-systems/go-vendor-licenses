@@ -20,7 +20,7 @@ import (
 	license "vgitlab01.tq-net.de/tq-em/tools/go-vendor-licenses.git/license"
 )
 
-const version string = "0.1"
+const version string = "0.2"
 
 type metadata struct {
 	name     string

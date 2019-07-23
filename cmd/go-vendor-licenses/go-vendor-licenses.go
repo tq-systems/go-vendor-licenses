@@ -10,10 +10,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -35,6 +38,13 @@ type metadata struct {
 
 const (
 	gopkgFile = "Gopkg.lock"
+)
+
+var (
+	ignoreCritLicsFlag = flag.Bool("i", false, "ignore missing or copyleft licenses")
+	vendorFlag         = flag.Bool("vendor", false, "use vendored versions of dependant Go modules")
+	manifestFlag       = flag.Bool("m", false, "display manifest of dependant packages")
+	disclaimerFlag     = flag.Bool("d", false, "display disclaimer of dependant packages")
 )
 
 func buildPath(pkgname string) string {
@@ -93,12 +103,79 @@ func readGopkgFile() []metadata {
 	return ret
 }
 
+func modCommand(cmd string) *exec.Cmd {
+	return exec.Command("sh", "-c", "GO111MODULE=on exec "+cmd)
+}
+
+func readModule() []metadata {
+	var cmd *exec.Cmd
+	if *vendorFlag {
+		cmd = modCommand("go list -m -json -mod=vendor all")
+	} else {
+		/* If we aren't using vendored dependencies, we need to make
+		 * sure that all dependencies are available */
+		err := modCommand("go mod download").Run()
+		if err != nil {
+			log.Fatalln(err)
+		}
+		cmd = modCommand("go list -m -json all")
+	}
+	output, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	dec := json.NewDecoder(output)
+
+	// There are more values, but we are only interested in these
+	type module struct {
+		Path    string
+		Version string
+		Dir     string
+	}
+
+	ret := []metadata{}
+
+	for {
+		var m module
+		err := dec.Decode(&m)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		meta := metadata{
+			name:    m.Path,
+			version: m.Version,
+			path:    m.Dir,
+		}
+
+		ret = append(ret, meta)
+	}
+
+	err = cmd.Wait()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return ret
+}
+
 func createManifest(manifest []metadata) error {
 	writer := tabwriter.NewWriter(os.Stdout, 1, 4, 2, ' ', 0)
 
 	for k := 0; k < len(manifest); k++ {
 		pkgInfo := fmt.Sprintf("name:     %s\n", manifest[k].name)
-		pkgInfo += fmt.Sprintf("revision: %s\n", manifest[k].revision)
+		if manifest[k].revision != "" {
+			pkgInfo += fmt.Sprintf("revision: %s\n", manifest[k].revision)
+		}
 		if manifest[k].version != "" {
 			pkgInfo += fmt.Sprintf("version:  %s\n", manifest[k].version)
 		}
@@ -119,13 +196,9 @@ func createManifest(manifest []metadata) error {
 func identifyLicenses(manifest []metadata, ignoreCritLicsFlag bool) {
 	for k := 0; k < len(manifest); k++ {
 		licenseString, err := license.BuildLicenseString(manifest[k].path)
-		if err != nil {
-			if ignoreCritLicsFlag {
-				manifest[k].license = licenseString
-			} else {
-				fmt.Fprintln(os.Stderr, licenseString, err)
-				os.Exit(1)
-			}
+		if err != nil && !ignoreCritLicsFlag {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		} else {
 			manifest[k].license = licenseString
 		}
@@ -147,15 +220,25 @@ func main() {
 		log.Fatalf("Error: This tool is running in linux only!")
 	}
 
-	manifest := readGopkgFile()
-
-	ignoreCritLicsFlag := flag.Bool("i", false,
-		"ignore missing or copyleft licenses")
-	manifestFlag := flag.Bool("m", false,
-		"display manifest of dependant packages")
-	disclaimerFlag := flag.Bool("d", false,
-		"display disclaimer of dependant packages")
 	flag.Parse()
+	if *manifestFlag == *disclaimerFlag {
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	_, err := os.Stat(gopkgFile)
+	if err != nil && !os.IsNotExist(err) {
+		log.Fatalln(err)
+	}
+
+	var manifest []metadata
+
+	if err == nil {
+		manifest = readGopkgFile()
+	} else {
+		manifest = readModule()
+	}
 
 	if *manifestFlag {
 		identifyLicenses(manifest, *ignoreCritLicsFlag)
@@ -169,20 +252,7 @@ func main() {
 			log.Fatalln(err)
 		}
 	} else {
-		fmt.Print(`Usage: go-vendor-licenses [option] [mode]
-
-option:
-	-i		ignore crititcal licenses during creating the manifest
-
-modes:
-  -m    display dependencies manifest
-  -d    display dependencies disclaimer
-
-'go-vendor-licenses' is a go dependencies tool which can be used natively during developing or building.
-The tool reads the 'Gopkg.lock' file and identifies the licenses in the vendor directory.
-These are created by the go dependencies tool 'dep', so ensure running 'dep ensure' before using this tool.
-
-`)
-		os.Exit(1)
+		// Should not be reached
+		panic("invalid flag combination")
 	}
 }

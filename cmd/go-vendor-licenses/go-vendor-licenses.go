@@ -12,6 +12,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -50,8 +51,7 @@ func readGopkgFile() []metadata {
 
 	file, error := os.Open(gopkgFile)
 	if error != nil {
-		fmt.Println(error)
-		os.Exit(1)
+		log.Fatalln(error)
 	}
 	defer file.Close()
 
@@ -123,7 +123,7 @@ func identifyLicenses(manifest []metadata, ignoreCritLicsFlag bool) {
 			if ignoreCritLicsFlag {
 				manifest[k].license = licenseString
 			} else {
-				fmt.Println(licenseString, err)
+				fmt.Fprintln(os.Stderr, licenseString, err)
 				os.Exit(1)
 			}
 		} else {
@@ -144,8 +144,7 @@ func createDisclaimer(manifest []metadata) error {
 
 func main() {
 	if runtime.GOOS != "linux" {
-		fmt.Println("Error: This tool is running in linux only!")
-		os.Exit(1)
+		log.Fatalf("Error: This tool is running in linux only!")
 	}
 
 	manifest := readGopkgFile()
@@ -162,17 +161,15 @@ func main() {
 		identifyLicenses(manifest, *ignoreCritLicsFlag)
 		err := createManifest(manifest)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			log.Fatalln(err)
 		}
 	} else if *disclaimerFlag {
 		err := createDisclaimer(manifest)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			log.Fatalln(err)
 		}
 	} else {
-		fmt.Printf(`Usage: go-vendor-licenses [option] [mode]
+		fmt.Print(`Usage: go-vendor-licenses [option] [mode]
 
 option:
 	-i		ignore crititcal licenses during creating the manifest

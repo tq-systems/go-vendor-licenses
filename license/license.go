@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -299,7 +300,7 @@ func BuildLicenseString(path string) (string, error) {
 
 	for _, match := range criticalLicenseNicknames {
 		if match == license.Template.Nickname {
-			fmt.Println("Found critical license: ", license.Template.Nickname)
+			log.Println("Found critical license: ", license.Template.Nickname)
 			err = fmt.Errorf("criticalLicense")
 		}
 	}
@@ -345,7 +346,7 @@ func BuildDisclaimerString(path string, pkg string) error {
 			disclaimer += fmt.Sprintf("\nFilename: %s\n", filepath.Base(file.Name()))
 			content, err := ioutil.ReadFile(filepath.Join(path, file.Name()))
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 			disclaimer += fmt.Sprintf("%s", content)
 		}

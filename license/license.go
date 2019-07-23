@@ -241,7 +241,7 @@ func scoreLicenseName(name string) float64 {
 }
 
 func findLicenseFile(path string) (string, error) {
-	files, err := ioutil.ReadDir(filepath.Join(path))
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return "", err
 	}
@@ -249,7 +249,7 @@ func findLicenseFile(path string) (string, error) {
 	bestScore := float64(0)
 	bestName := ""
 	for _, file := range files {
-		if !file.Mode().IsRegular() {
+		if file.IsDir() {
 			continue
 		}
 		score := scoreLicenseName(file.Name())
@@ -295,7 +295,7 @@ func BuildLicenseString(path string) (string, error) {
 
 	license, err := identifyLicense(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Unable to identify license of %s: %s", path, err.Error())
 	}
 
 	for _, match := range criticalLicenseNicknames {

@@ -4,34 +4,21 @@ package main
 
 import (
 	"bufio"
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"go/build"
-	"hash/fnv"
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type asset struct {
 	Name    string
 	Content string
-	etag    string
-}
-
-func (a asset) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	if a.etag != "" && w.Header().Get("ETag") == "" {
-		w.Header().Set("ETag", a.etag)
-	}
-	body := strings.NewReader(a.Content)
-	http.ServeContent(w, req, a.Name, time.Time{}, body)
 }
 
 var (
@@ -154,8 +141,6 @@ func process(filename, pkg, variable, wrap string) error {
 }
 
 func embed(variable, wrap, filename string, in io.Reader, out io.Writer) error {
-	h := fnv.New64a()
-	r := io.TeeReader(in, h)
 	_, err := fmt.Fprintf(out, "var %s = %s(asset{Name: %q, Content: \"\" +\n",
 		variable, wrap, filename)
 	if err != nil {
@@ -164,7 +149,7 @@ func embed(variable, wrap, filename string, in io.Reader, out io.Writer) error {
 	buf := make([]byte, 1*1024*1024)
 	eof := false
 	for !eof {
-		n, err := r.Read(buf)
+		n, err := in.Read(buf)
 		switch err {
 		case io.EOF:
 			eof = true
@@ -183,8 +168,7 @@ func embed(variable, wrap, filename string, in io.Reader, out io.Writer) error {
 			return err
 		}
 	}
-	etag := `"` + base64.StdEncoding.EncodeToString(h.Sum(nil)) + `"`
-	if _, err := fmt.Fprintf(out, "\t\"\", etag: %#q})\n", etag); err != nil {
+	if _, err := fmt.Fprint(out, "\t\"\"})\n"); err != nil {
 		return err
 	}
 	return nil

@@ -289,9 +289,8 @@ func identifyLicense(path string) (*License, error) {
 	return &license, nil
 }
 
-func BuildLicenseString(pkg string) (string, error) {
+func BuildLicenseString(path string) (string, error) {
 	confidence := 0.95
-	path := buildPath(pkg)
 
 	license, err := identifyLicense(path)
 	if err != nil {
@@ -326,12 +325,11 @@ func BuildLicenseString(pkg string) (string, error) {
 	return licenseString, err
 }
 
-func BuildDisclaimerString(pkg string) error {
+func BuildDisclaimerString(path string, pkg string) error {
 	var disclaimer string = ""
 	writer := tabwriter.NewWriter(os.Stdout, 1, 4, 2, ' ', 0)
 
 	disclaimer += fmt.Sprintf("\nDISCLAIMER of %s:\n", pkg)
-	path := buildPath(pkg)
 
 	files, err := ioutil.ReadDir(filepath.Join(path))
 	if err != nil {
@@ -360,13 +358,4 @@ func BuildDisclaimerString(pkg string) error {
 
 	writer.Flush()
 	return nil
-}
-
-func buildPath(pkgname string) string {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	path := filepath.Join(cwd, "vendor", pkgname)
-	return path
 }

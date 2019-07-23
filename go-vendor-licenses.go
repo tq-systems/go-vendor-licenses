@@ -13,6 +13,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"text/tabwriter"
@@ -24,20 +25,28 @@ const version string = "0.2"
 
 type metadata struct {
 	name     string
+	path     string
 	revision string
 	version  string
 	branch   string
 	license  string
 }
 
-var (
-	manifest  map[int]*metadata
-	gopkgFile string = "Gopkg.lock"
-	vendorDir string = "vendor"
+const (
+	gopkgFile = "Gopkg.lock"
 )
 
-func readGopkgFile() {
-	var i int = 0
+func buildPath(pkgname string) string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	path := filepath.Join(cwd, "vendor", pkgname)
+	return path
+}
+
+func readGopkgFile() []metadata {
+	ret := []metadata{}
 
 	file, error := os.Open(gopkgFile)
 	if error != nil {
@@ -55,17 +64,10 @@ func readGopkgFile() {
 		if line == "[[projects]]" || line == "[solve-meta]" {
 
 			if meta.name != "" {
-				//fmt.Println(meta)
-				manifest[i] = &metadata{
-					meta.name,
-					meta.revision,
-					meta.version,
-					meta.branch,
-					meta.license}
-				i++
+				ret = append(ret, meta)
 			}
 
-			meta = metadata{"", "", "", "", ""}
+			meta = metadata{}
 			continue
 		}
 
@@ -77,6 +79,7 @@ func readGopkgFile() {
 			switch key {
 			case "name":
 				meta.name = value
+				meta.path = buildPath(value)
 			case "revision":
 				meta.revision = value
 			case "version":
@@ -86,9 +89,11 @@ func readGopkgFile() {
 			}
 		}
 	}
+
+	return ret
 }
 
-func createManifest() error {
+func createManifest(manifest []metadata) error {
 	writer := tabwriter.NewWriter(os.Stdout, 1, 4, 2, ' ', 0)
 
 	for k := 0; k < len(manifest); k++ {
@@ -111,9 +116,9 @@ func createManifest() error {
 	return nil
 }
 
-func identifyLicenses(ignoreCritLicsFlag bool) {
+func identifyLicenses(manifest []metadata, ignoreCritLicsFlag bool) {
 	for k := 0; k < len(manifest); k++ {
-		licenseString, err := license.BuildLicenseString(manifest[k].name)
+		licenseString, err := license.BuildLicenseString(manifest[k].path)
 		if err != nil {
 			if ignoreCritLicsFlag {
 				manifest[k].license = licenseString
@@ -127,9 +132,9 @@ func identifyLicenses(ignoreCritLicsFlag bool) {
 	}
 }
 
-func createDisclaimer() error {
+func createDisclaimer(manifest []metadata) error {
 	for k := 0; k < len(manifest); k++ {
-		err := license.BuildDisclaimerString(manifest[k].name)
+		err := license.BuildDisclaimerString(manifest[k].path, manifest[k].name)
 		if err != nil {
 			return err
 		}
@@ -143,8 +148,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	manifest = make(map[int]*metadata)
-	readGopkgFile()
+	manifest := readGopkgFile()
 
 	ignoreCritLicsFlag := flag.Bool("i", false,
 		"ignore missing or copyleft licenses")
@@ -155,14 +159,14 @@ func main() {
 	flag.Parse()
 
 	if *manifestFlag {
-		identifyLicenses(*ignoreCritLicsFlag)
-		err := createManifest()
+		identifyLicenses(manifest, *ignoreCritLicsFlag)
+		err := createManifest(manifest)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 	} else if *disclaimerFlag {
-		err := createDisclaimer()
+		err := createDisclaimer(manifest)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)

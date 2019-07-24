@@ -15,6 +15,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -240,7 +241,7 @@ func scoreLicenseName(name string) float64 {
 }
 
 func findLicenseFile(path string) (string, error) {
-	files, err := ioutil.ReadDir(filepath.Join(path))
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return "", err
 	}
@@ -248,7 +249,7 @@ func findLicenseFile(path string) (string, error) {
 	bestScore := float64(0)
 	bestName := ""
 	for _, file := range files {
-		if !file.Mode().IsRegular() {
+		if file.IsDir() {
 			continue
 		}
 		score := scoreLicenseName(file.Name())
@@ -289,18 +290,17 @@ func identifyLicense(path string) (*License, error) {
 	return &license, nil
 }
 
-func BuildLicenseString(pkg string) (string, error) {
+func BuildLicenseString(path string) (string, error) {
 	confidence := 0.95
-	path := buildPath(pkg)
 
 	license, err := identifyLicense(path)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Unable to identify license of %s: %s", path, err.Error())
 	}
 
 	for _, match := range criticalLicenseNicknames {
 		if match == license.Template.Nickname {
-			fmt.Println("Found critical license: ", license.Template.Nickname)
+			log.Println("Found critical license: ", license.Template.Nickname)
 			err = fmt.Errorf("criticalLicense")
 		}
 	}
@@ -326,12 +326,11 @@ func BuildLicenseString(pkg string) (string, error) {
 	return licenseString, err
 }
 
-func BuildDisclaimerString(pkg string) error {
+func BuildDisclaimerString(path string, pkg string) error {
 	var disclaimer string = ""
 	writer := tabwriter.NewWriter(os.Stdout, 1, 4, 2, ' ', 0)
 
 	disclaimer += fmt.Sprintf("\nDISCLAIMER of %s:\n", pkg)
-	path := buildPath(pkg)
 
 	files, err := ioutil.ReadDir(filepath.Join(path))
 	if err != nil {
@@ -347,7 +346,7 @@ func BuildDisclaimerString(pkg string) error {
 			disclaimer += fmt.Sprintf("\nFilename: %s\n", filepath.Base(file.Name()))
 			content, err := ioutil.ReadFile(filepath.Join(path, file.Name()))
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 			}
 			disclaimer += fmt.Sprintf("%s", content)
 		}
@@ -360,13 +359,4 @@ func BuildDisclaimerString(pkg string) error {
 
 	writer.Flush()
 	return nil
-}
-
-func buildPath(pkgname string) string {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return ""
-	}
-	path := filepath.Join(cwd, "vendor", pkgname)
-	return path
 }

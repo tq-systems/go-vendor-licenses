@@ -22,8 +22,14 @@
 //go:generate asset osl_3.0.txt
 //go:generate asset unlicense.txt
 //go:generate asset wtfpl.txt
+//go:generate asset tqssla_1.0.2.txt
 
 package assets
+
+type asset struct {
+	Name    string
+	Content string
+}
 
 var (
 	Assets = []asset{}

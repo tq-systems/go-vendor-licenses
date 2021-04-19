@@ -1,3 +1,3 @@
-module vgitlab01.tq-net.de/tq-em/tools/go-vendor-licenses.git
+module github.com/tq-systems/go-vendor-licenses
 
-go 1.12
+go 1.13

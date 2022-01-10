@@ -110,7 +110,7 @@ func modCommand(cmd string) *exec.Cmd {
 func readModule() []metadata {
 	var cmd *exec.Cmd
 	if *vendorFlag {
-		cmd = modCommand("go list -m -json -mod=vendor all")
+		cmd = modCommand("go list -m -json -mod=mod all")
 	} else {
 		/* If we aren't using vendored dependencies, we need to make
 		 * sure that all dependencies are available */

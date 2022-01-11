@@ -8,7 +8,7 @@
  * This work is based on github.com/pmezard/licenses
  */
 
-package license
+package licenses
 
 import (
 	"bufio"
@@ -23,7 +23,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/tq-systems/go-vendor-licenses/license/assets"
+	"github.com/tq-systems/go-vendor-licenses/licenses/assets"
 )
 
 var (

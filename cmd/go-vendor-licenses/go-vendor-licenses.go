@@ -22,7 +22,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	license "github.com/tq-systems/go-vendor-licenses/license"
+	licenses "github.com/tq-systems/go-vendor-licenses/licenses"
 )
 
 const version string = "0.2"
@@ -110,7 +110,7 @@ func modCommand(cmd string) *exec.Cmd {
 func readModule() []metadata {
 	var cmd *exec.Cmd
 	if *vendorFlag {
-		cmd = modCommand("go list -m -json -mod=vendor all")
+		cmd = modCommand("go list -m -json -mod=mod all")
 	} else {
 		/* If we aren't using vendored dependencies, we need to make
 		 * sure that all dependencies are available */
@@ -195,7 +195,7 @@ func createManifest(manifest []metadata) error {
 
 func identifyLicenses(manifest []metadata, ignoreCritLicsFlag bool) {
 	for k := 0; k < len(manifest); k++ {
-		licenseString, err := license.BuildLicenseString(manifest[k].path)
+		licenseString, err := licenses.BuildLicenseString(manifest[k].path)
 		if err != nil && !ignoreCritLicsFlag {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -207,7 +207,7 @@ func identifyLicenses(manifest []metadata, ignoreCritLicsFlag bool) {
 
 func createDisclaimer(manifest []metadata) error {
 	for k := 0; k < len(manifest); k++ {
-		err := license.BuildDisclaimerString(manifest[k].path, manifest[k].name)
+		err := licenses.BuildDisclaimerString(manifest[k].path, manifest[k].name)
 		if err != nil {
 			return err
 		}

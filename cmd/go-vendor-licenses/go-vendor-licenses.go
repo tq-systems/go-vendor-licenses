@@ -150,6 +150,10 @@ func readModule() []metadata {
 		if err != nil {
 			log.Fatalln(err)
 		}
+		if len(m.Dir) < 1 {
+			// skip entry if no directory exists
+			continue
+		}
 
 		meta := metadata{
 			name:    m.Path,
@@ -195,6 +199,10 @@ func createManifest(manifest []metadata) error {
 
 func identifyLicenses(manifest []metadata, ignoreCritLicsFlag bool) {
 	for k := 0; k < len(manifest); k++ {
+		if len(manifest[k].path) < 1 {
+			// skip processing empty entries as this would lead to an error
+			continue
+		}
 		licenseString, err := licenses.BuildLicenseString(manifest[k].path)
 		if err != nil && !ignoreCritLicsFlag {
 			fmt.Fprintln(os.Stderr, err)
